@@ -9,7 +9,7 @@ groups:
       severity: page
     annotations:
       summary: "System {{ $labels.instance }} Down"
-      description: "{{ $labels.instance }} missed it's check in and has been unreachable for more than 10 minutes."
+      description: "{{ $labels.instance }} missed it's check in and has been unreachable for more than a minute."
 
   - alert: BtrfsFailedSrub
     expr: node_systemd_unit_state{name='btrfs-autoscrub.service', state='failed'}  > 0
