@@ -1,0 +1,108 @@
+groups:
+- name: systems
+  rules:
+    
+  - alert: SystemDown
+    expr: up{job='Systems'} == 0
+    for: 30s
+    labels:
+      severity: page
+    annotations:
+      summary: "System {{ $labels.instance }} Down"
+      description: "{{ $labels.instance }} missed it's check in and has been unreachable for more than 10 minutes."
+
+  - alert: BtrfsFailedSrub
+    expr: node_systemd_unit_state{name='btrfs-autoscrub.service', state='failed'}  > 0
+    labels:
+      severity: page
+    annotations:
+      summary: "System {{ $labels.instance }} BTRFS Srub Failed"
+      description: "{{ $labels.instance }} is reporting a failed BTRFS Scrub Job."
+
+  - alert: BackupFailed
+    expr: node_systemd_unit_state{name='restic-backup.service', state='failed'}  > 0
+    labels:
+      severity: page
+    annotations:
+      summary: "Restic Backup of Data Failed on{{ $labels.instance }}"
+      description: "{{ $labels.instance }} is reporting a failed backup run."
+
+  - alert: SmartmonStatsScrape
+    expr: node_systemd_unit_state{name='smartd-export.service', state='failed'}  > 0
+    labels:
+      severity: page
+    annotations:
+      summary: "System {{ $labels.instance }} a SmartD Export has failed!"
+      description: "{{ $labels.instance }} is reporting a failed smartd stats collector job."
+
+  - alert: SmartDriveFail
+    expr:  (count by(instance) (smartmon_device_smart_healthy)) !=  (count by(instance) (smartmon_device_active))
+    labels:
+      severity: page
+    annotations:
+      summary: "Detected an unhealthy drive in {{ $labels.instance }}" 
+      description: "{{ $labels.instance }} S.M.A.R.T. is reporting a failing drive!"
+
+  - alert: BTRFSNearingFull
+    expr: (node_filesystem_avail_bytes{fstype='btrfs'}/node_filesystem_size_bytes{fstype='btrfs'})*100 < 10
+    for: 5m
+    labels:
+      severity: page
+    annotations:
+      summary: "BTRFS Raid out of disk space {{ $labels.instance }}"
+      description: "Disk is almost full (< 10% left)\n  VALUE = {{ $value }}\n"
+
+  - alert: HostOutOfMemory
+    expr: ((node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100) < 10
+    for: 5m
+    labels:
+      severity: page
+    annotations:
+      summary: "Host out of memory {{ $labels.instance }}"
+      description: "Node memory is filling up (< 10% left)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+
+  - alert: HostUnusualNetworkThroughputIn
+    expr: sum by (instance) (((rate(node_network_receive_bytes_total[2m])) / 1024) / 1024) > 100
+    for: 5m
+    labels:
+      severity: page
+    annotations:
+      summary: "Host unusual network throughput in (instance {{ $labels.instance }})"
+      description: "Host network interfaces are probably receiving too much data (> 100 MB/s)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+
+  - alert: HostUnusualNetworkThroughputOut
+    expr: sum by (instance) (((rate(node_network_transmit_bytes_total[2m])) / 1024) / 1024) > 100
+    for: 5m
+    labels:
+      severity: page
+    annotations:
+      summary: "Host unusual network throughput out (instance {{ $labels.instance }})"
+      description: "Host network interfaces are probably sending too much data (> 100 MB/s)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+
+  - alert: HostHighCpuLoad
+    expr: (100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Host high CPU load (instance {{ $labels.instance }})"
+      description: "CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+
+  - alert: HostPhysicalComponentTooHot
+    expr: node_hwmon_temp_celsius > 75
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Host physical component too hot (instance {{ $labels.instance }})"
+      description: "Physical hardware component too hot\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+
+  - alert: PrometheusNoData
+    expr: count(node_uname_info) < 1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Prometheus Data Collection Failed"
+      description: "Promethus failed to decode data from Node Exporters"
+

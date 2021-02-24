@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 1m
+  evaluation_interval: 1m  
+
+rule_files:
+  - '/etc/prometheus/alert.rules'
+
+scrape_configs:
+  - job_name: 'Systems'
+    static_configs:
+    # Repeat for the number of different machines you are collecting data from.
+      - targets: ['IP-ADDRESS:PORT']
+        labels:
+          instance: 'MACHINE-NAME/ALIAS'
+    # Example
+      - targets: ['10.10.0.12:9100']
+        labels:
+          instance: 'jupiter'
+
+alerting:
+  alertmanagers:
+  - scheme: http
+    static_configs:
+    - targets:
+      - "alertmanager:9093"
